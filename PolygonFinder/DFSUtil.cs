@@ -86,14 +86,31 @@ namespace PolygonFinder
         {
             this.Trimmed = new List<Line>();
 
+            for (int i = 0; i < lines.Count; i++)
+            {
+                int counter = 0;
+                for (int j = 0; j < lines[i].IntersectsWith.Count; j++)
+                {
+                    if (lines.Contains(lines[i].IntersectsWith[j]))
+                    {
+                        ++counter;
+                    }
+                }
+                if (counter < 2)
+                {
+                    this.TrimTrailingLine(lines, lines[i]);
+                }
+            }
+
+            /*
             foreach (var line in lines)
             {
                 if (line.IntersectsWith.Count < 2)
                 {
-                    this.TrimTrailingLine(line);
+                    this.TrimTrailingLine(lines, line);
                 }
             }
-
+            */
             foreach (var trimmed in this.Trimmed)
             {
                 lines.Remove(trimmed);
@@ -103,14 +120,14 @@ namespace PolygonFinder
         }
 
         // TrimTrailingLine trims the line if it has less than two 
-        private void TrimTrailingLine(Line line)
+        private void TrimTrailingLine(List<Line> lines, Line line)
         {
             int validNeighbors = 0;
             int validNeighborIndex = 0;
 
             for (int i = 0; i < line.IntersectsWith.Count; i++)
             {
-                if (!this.Trimmed.Contains(line.IntersectsWith[i]))
+                if (lines.Contains(line.IntersectsWith[i]) && !this.Trimmed.Contains(line.IntersectsWith[i]))
                 {
                     ++validNeighbors;
                     // In case if this is overwritten twice, it doesn't matter, since the line forms a cycle
@@ -121,7 +138,7 @@ namespace PolygonFinder
             if (validNeighbors < 2)
             {
                 this.Trimmed.Add(line);
-                this.TrimTrailingLine(line.IntersectsWith[validNeighborIndex]);
+                this.TrimTrailingLine(lines, line.IntersectsWith[validNeighborIndex]);
             }
         }
     }
