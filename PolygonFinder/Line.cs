@@ -19,6 +19,13 @@ namespace PolygonFinder
         private double Slope { get; }
         private double Constant { get; }
 
+        // In case if the line is expressed in terms of `x = 1` or `y = 1`,
+        // then we assign the constant value to these variables
+        private bool IsConstantX { get; }
+        private double ConstantX { get; }
+        private bool IsConstantY { get; }
+        private double ConstantY { get; }
+
         public Line(int id, Point start, Point end)
         {
             this.ID = id;
@@ -27,15 +34,65 @@ namespace PolygonFinder
 
             this.IntersectsWith = new List<Line>();
 
-            this.Slope = (end.Y - start.Y) / (end.X - start.X);
-            this.Constant = start.Y - start.X * this.Slope;
+            var dx = (end.X - start.X);
+            var dy = (end.Y - start.Y);
+
+            if (dx == 0) {
+                this.ConstantX = start.X;
+                this.IsConstantX = true;
+            } else if (dy == 0) {
+                this.ConstantY = start.Y;
+                this.IsConstantY = true;
+            } else {
+                this.Slope = dx == 0 ? 0 : dy / dx;
+                this.Constant = start.Y - start.X * this.Slope;
+            }
         }
 
         // Get the coordinates of two line intersection
         public Point GetIntersectionPoint(Line line)
         {
-            double x = (this.Constant - line.Constant) / (line.Slope - this.Slope);
-            double y = this.Slope * x + this.Constant;
+            // Make sure the `line` is an intersecting one
+            if (!this.IntersectsWith.Contains(line))
+                throw new ArgumentException();
+
+            double x, y;
+
+            if (this.IsConstantX && line.IsConstantY)
+            {
+                x = this.ConstantX;
+                y = line.ConstantY;
+            }
+            else if (line.IsConstantX && this.IsConstantY) {
+                x = line.ConstantX;
+                y = this.ConstantY;
+            }
+            else if (this.IsConstantX)
+            {
+                x = this.ConstantX;
+                y = line.Slope * x + line.Constant;
+            }
+            else if (this.IsConstantY)
+            {
+                y = this.ConstantY;
+                x = (line.Constant - y) / line.Slope;
+            }
+            else if (line.IsConstantX)
+            {
+                x = line.ConstantX;
+                y = this.Slope * x + this.Constant;
+            }
+            else if (line.IsConstantY)
+            {
+                y = line.ConstantY;
+                x = (this.Constant - y) / this.Slope;
+            }
+            else
+            {
+                x = (this.Constant - line.Constant) / (line.Slope - this.Slope);
+                y = this.Slope * x + this.Constant;
+            }
+
             return new Point(x, y);
         }
 
@@ -65,7 +122,7 @@ namespace PolygonFinder
 
         // Orientation detects whether this lines start point, end point and 
         // outside point `p` are oriented colinearly, clockwise or counterclockwise.
-        public Orientation GetOrientation(Point p)
+        private Orientation GetOrientation(Point p)
         {
             double deltaSlope = (this.End.Y - this.Start.Y) * (p.X - this.End.X) -
                                 (p.Y - this.End.Y) * (this.End.X - this.Start.X);
@@ -77,7 +134,7 @@ namespace PolygonFinder
 
         // IsOnSegment checks if the point `p` X and Y coordinates lie
         // within this Lines X and Y projection range
-        public bool IsOnSegment(Point p)
+        private bool IsOnSegment(Point p)
         {
             if (p.X <= Math.Max(this.Start.X, this.End.X) &&
                 p.X >= Math.Min(this.Start.X, this.End.X) &&

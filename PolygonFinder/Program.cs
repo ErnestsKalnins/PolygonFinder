@@ -10,8 +10,18 @@ namespace PolygonFinder
     {
         static void Main(string[] args)
         {
-            string excelPath = @"C:\Users\Ernests\source\repos\PolygonFinder\PolygonFinder\Linijas.xlsx";
-            var readExcel = new ExcelFile(excelPath);
+            Console.Write("Input excel file path (c:/.../file.xlsx): ");
+            string excelPath = Console.ReadLine();
+            ExcelFile readExcel;
+            try
+            {
+                readExcel = new ExcelFile(excelPath);
+            }
+            catch
+            {
+                Console.WriteLine("Invalid file path");
+                return;
+            }
 
             var lines = ReadLines(readExcel);
 
@@ -25,7 +35,7 @@ namespace PolygonFinder
             excelFormatter.WritePolygons(canvas.Polygons);
         }
 
-        // I could not find any other class to put this in.
+        // I could not find any other suitable class to put this in.
         public static List<Line> ReadLines(ExcelFile xl)
         {
             var ids = xl.ReadColumn(1, 3);

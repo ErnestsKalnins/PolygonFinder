@@ -23,11 +23,25 @@ namespace PolygonFinder
         {
             for (int i = 0; i < this.Lines.Count; i++)
             {
-                int j = (i == this.Lines.Count - 1) ? 0 : i + 1;
-
-                this.Vertices.Add(
-                    this.Lines[i].GetIntersectionPoint(this.Lines[j])
-                    );
+                if (i == this.Lines.Count - 1)
+                {
+                    foreach (var line in this.Lines[i].IntersectsWith)
+                    {
+                        
+                        if (line != this.Lines[i-1] && this.Lines.Contains(line))
+                        {
+                            this.Vertices.Add(
+                                this.Lines[i].GetIntersectionPoint(line)
+                                );
+                        }
+                    }
+                }
+                else
+                {
+                    this.Vertices.Add(
+                        this.Lines[i].GetIntersectionPoint(this.Lines[i + 1])
+                        );
+                }
             }
         }
     }

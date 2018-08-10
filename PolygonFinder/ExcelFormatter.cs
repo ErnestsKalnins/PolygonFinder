@@ -17,8 +17,8 @@ namespace PolygonFinder
 
         public void WritePolygons(List<Polygon> polygons)
         {
-            this.WriteHeader();
-            int verticalOffset = 3;
+            int verticalOffset = 1;
+            int polygonNr = 1;
             foreach (var polygon in polygons)
             {
                 var lineIDs = new List<int>();
@@ -33,36 +33,41 @@ namespace PolygonFinder
                     vertexY.Add(polygon.Vertices[i].Y);
                 }
 
+                this.WriteHeader(verticalOffset, polygonNr++);
+
                 this.Excel.WriteColumn(
                     1, 
                     lineIDs.Select((n) => n.ToString()).ToArray(), 
-                    verticalOffset
+                    verticalOffset + 3
                     );
                 this.Excel.WriteColumn(
                     2, 
-                    vertexX.Select((n) => Math.Round(n).ToString()).ToArray(), 
-                    verticalOffset
+                    vertexX.Select((n) => n.ToString()).ToArray(), 
+                    verticalOffset + 3
                     );
                 this.Excel.WriteColumn(
                     3, 
-                    vertexY.Select((n) => Math.Round(n).ToString()).ToArray(), 
-                    verticalOffset
+                    vertexY.Select((n) => n.ToString()).ToArray(), 
+                    verticalOffset + 3
                     );
 
-                verticalOffset += polygon.Lines.Count + 1;
+                verticalOffset += polygon.Lines.Count + 4;
             }
         }
 
-        private void WriteHeader()
+        private void WriteHeader(int row, int number)
         {
-            var headerLine1 = new string[] { "Line numbers", "Vertices" };
-            var headerLine2 = new string[] { "X", "Y" };
+            var headerLine1 = new string[] { "Polygon " + number };
+            var headerLine2 = new string[] { "Line numbers", "Vertices" };
+            var headerLine3 = new string[] { "X", "Y" };
 
-            this.Excel.MergeCells(1, 1, 2, 1);
-            this.Excel.MergeCells(1, 2, 1, 3);
+            this.Excel.MergeCells(row, 1, row, 3);
+            this.Excel.MergeCells(row + 1, 1, row + 2, 1);
+            this.Excel.MergeCells(row + 1, 2, row + 1, 3);
 
-            this.Excel.WriteRow(1, headerLine1); 
-            this.Excel.WriteRow(2, headerLine2, 2); 
+            this.Excel.WriteRow(row, headerLine1);
+            this.Excel.WriteRow(row + 1, headerLine2); 
+            this.Excel.WriteRow(row + 2, headerLine3, 2); 
         }
 
     }

@@ -15,6 +15,9 @@ namespace PolygonFinder
         private Excel.Worksheet xlWorksheet;
         private Excel.Range xlRange;
 
+        // Helper variable to determine if the excel was ever successfully initialized
+        private bool createdSuccessfully;
+
         // Constructor that creates a new excel file
         public ExcelFile()
         {
@@ -23,6 +26,8 @@ namespace PolygonFinder
             this.xlWorkbook = this.xlApp.Workbooks.Add();
             this.xlWorksheet = (Excel.Worksheet)this.xlApp.ActiveSheet;
             this.xlRange = this.xlWorksheet.UsedRange;
+
+            this.createdSuccessfully = true;
         }
 
         // Constructor that opens an excel file in `filePath`
@@ -32,6 +37,8 @@ namespace PolygonFinder
             this.xlWorkbook = this.xlApp.Workbooks.Open(filePath);
             this.xlWorksheet = this.xlWorkbook.Sheets[1];
             this.xlRange = this.xlWorksheet.UsedRange;
+
+            this.createdSuccessfully = true;
         }
 
         ~ExcelFile()
@@ -39,14 +46,18 @@ namespace PolygonFinder
             GC.Collect();
             GC.WaitForPendingFinalizers();
 
-            Marshal.ReleaseComObject(this.xlRange);
-            Marshal.ReleaseComObject(this.xlWorksheet);
+            // Avoiding dereferencing null values
+            if (this.createdSuccessfully)
+            {
+                Marshal.ReleaseComObject(this.xlRange);
+                Marshal.ReleaseComObject(this.xlWorksheet);
 
-            this.xlWorkbook.Close();
-            Marshal.ReleaseComObject(this.xlWorkbook);
+                this.xlWorkbook.Close();
+                Marshal.ReleaseComObject(this.xlWorkbook);
 
-            this.xlApp.Quit();
-            Marshal.ReleaseComObject(this.xlApp);
+                this.xlApp.Quit();
+                Marshal.ReleaseComObject(this.xlApp);
+            }
         }
 
         public List<dynamic> ReadRow(int row, int offset = 1)
@@ -57,9 +68,8 @@ namespace PolygonFinder
             var readRow = new List<dynamic>();
             for (int i = offset; i <= this.xlRange.Columns.Count; i++)
             {
-                readRow.Add(
-                    this.ReadCell(row, i)
-                    );
+                var value = this.ReadCell(row, i);
+                if (value != null) readRow.Add(value);
             }
             return readRow;
         }
@@ -72,9 +82,8 @@ namespace PolygonFinder
             var readCol = new List<dynamic>();
             for (int i = offset; i <= this.xlRange.Rows.Count; i++)
             {
-                readCol.Add(
-                    this.ReadCell(i, col)
-                    );
+                var value = this.ReadCell(i, col);
+                if (value != null) readCol.Add(value);
             }
             return readCol;
         }
